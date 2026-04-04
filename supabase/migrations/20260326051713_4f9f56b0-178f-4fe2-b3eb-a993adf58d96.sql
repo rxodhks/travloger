@@ -1,0 +1,1 @@
+ALTER TABLE public.checkins ADD COLUMN map_type text NOT NULL DEFAULT 'domestic';

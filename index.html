@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- TODO: Set the document title to the name of your application -->
+    <title>Travloger</title>
+    <meta name="description" content="주변 지인들 혹은 연인과 함께 뜻깊고 행복한 추억들을 남겨보세요" />
+    <meta name="author" content="Lovable" />
+
+    <!-- TODO: Update og:title to match your application name -->
+
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b4617182-a8d1-4b93-b155-d30e4763f3da/id-preview-baa51f60--ac186426-4ae7-4e58-a33b-ee1fe60f1f1d.lovable.app-1774332082046.png"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta
+      name="twitter:image"
+      content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b4617182-a8d1-4b93-b155-d30e4763f3da/id-preview-baa51f60--ac186426-4ae7-4e58-a33b-ee1fe60f1f1d.lovable.app-1774332082046.png"
+    />
+    <meta property="og:title" content="Travloger" />
+    <meta name="twitter:title" content="Travloger" />
+    <meta property="og:description" content="주변 지인들 혹은 연인과 함께 뜻깊고 행복한 추억들을 남겨보세요" />
+    <meta name="twitter:description" content="주변 지인들 혹은 연인과 함께 뜻깊고 행복한 추억들을 남겨보세요" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script
+      type="text/javascript"
+      src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=40du4w8g6d&submodules=geocoder&callback=initNaverMap"
+    ></script>
+
+    <script type="text/javascript">
+      window.__naverMapReady = false;
+      function initNaverMap() {
+        window.__naverMapReady = true;
+        window.dispatchEvent(new Event('navermap-ready'));
+      }
+      window.navermap_authFailure = function () {
+        console.error('Naver Maps 인증 실패: ncpKeyId 또는 등록 도메인을 확인하세요.');
+      };
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
