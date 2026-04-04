@@ -2,8 +2,23 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as
+  | string
+  | undefined;
+
+if (!SUPABASE_URL?.trim() || !SUPABASE_PUBLISHABLE_KEY?.trim()) {
+  throw new Error(
+    [
+      "Supabase 클라이언트 설정이 없습니다.",
+      "Vite는 빌드 시점에만 VITE_* 변수를 넣습니다.",
+      "Vercel → Project → Settings → Environment Variables 에 다음을 추가하고 재배포하세요:",
+      "  VITE_SUPABASE_URL",
+      "  VITE_SUPABASE_PUBLISHABLE_KEY (anon / publishable 키)",
+      "서버 API용 SUPABASE_URL 과 이름이 다릅니다. 반드시 VITE_ 접두사가 있어야 합니다.",
+    ].join(" ")
+  );
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
