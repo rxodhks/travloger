@@ -20,10 +20,38 @@ if (!SUPABASE_URL?.trim() || !SUPABASE_PUBLISHABLE_KEY?.trim()) {
   );
 }
 
+const trimmedUrl = SUPABASE_URL.trim();
+let supabaseHost = "";
+try {
+  const u = new URL(trimmedUrl);
+  if (u.protocol !== "https:") {
+    throw new Error("https 가 아닙니다.");
+  }
+  supabaseHost = u.hostname.toLowerCase();
+} catch {
+  throw new Error(
+    "VITE_SUPABASE_URL 형식이 잘못되었습니다. Supabase 대시보드 → Settings → API 의 Project URL 전체를 복사하세요. (예: https://abcdefghijklmnop.supabase.co)"
+  );
+}
+
+if (!supabaseHost.endsWith(".supabase.co")) {
+  throw new Error(
+    `VITE_SUPABASE_URL 호스트가 supabase.co 가 아닙니다: ${supabaseHost}. 대시보드에 표시된 URL을 그대로 쓰세요.`
+  );
+}
+
+const projectRef = supabaseHost.replace(/\.supabase\.co$/, "");
+const placeholderRefs = /^(xxxx|xxx|example|placeholder|your-project|my-project|project-ref)$/i;
+if (!projectRef || placeholderRefs.test(projectRef)) {
+  throw new Error(
+    "VITE_SUPABASE_URL 에 실제 프로젝트 주소가 아니라 예시(xxxx 등)가 들어간 것 같습니다. Supabase → Settings → API 의 Project URL 을 다시 붙여 넣고 Vercel 환경 변수를 수정한 뒤 재배포하세요."
+  );
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(trimmedUrl, SUPABASE_PUBLISHABLE_KEY.trim(), {
   auth: {
     storage: localStorage,
     persistSession: true,

@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Bell, MapPin, BookOpen, Users, Plane, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, MapPin, BookOpen, Users, Plane, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,16 @@ const defaultPrefs: NotifPrefs = {
   trip_plan_notify: true,
 };
 
+function isMissingNotificationPrefsTable(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  if (error.code === "PGRST205") return true;
+  const m = (error.message || "").toLowerCase();
+  return (
+    m.includes("notification_preferences") &&
+    (m.includes("schema cache") || m.includes("does not exist") || m.includes("could not find"))
+  );
+}
+
 const notifItems = [
   { key: "checkin_notify" as const, icon: MapPin, label: "체크인 알림", desc: "그룹 멤버의 새 체크인" },
   { key: "memory_notify" as const, icon: BookOpen, label: "추억 알림", desc: "새로운 추억 기록" },
@@ -35,15 +46,21 @@ const NotificationSettingsPage = () => {
   const { toast } = useToast();
   const [prefs, setPrefs] = useState<NotifPrefs>(defaultPrefs);
   const [loading, setLoading] = useState(true);
+  const [tableMissing, setTableMissing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("notification_preferences")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (error && isMissingNotificationPrefsTable(error)) {
+        setTableMissing(true);
+        setLoading(false);
+        return;
+      }
       if (data) {
         setPrefs({
           checkin_notify: (data as any).checkin_notify,
@@ -58,7 +75,7 @@ const NotificationSettingsPage = () => {
   }, [user]);
 
   const updatePref = async (key: keyof NotifPrefs, value: boolean) => {
-    if (!user) return;
+    if (!user || tableMissing) return;
     const updated = { ...prefs, [key]: value };
     setPrefs(updated);
 
@@ -67,7 +84,16 @@ const NotificationSettingsPage = () => {
       .upsert({ user_id: user.id, ...updated } as any, { onConflict: "user_id" });
 
     if (error) {
-      toast({ title: "설정 저장 실패", variant: "destructive" });
+      if (isMissingNotificationPrefsTable(error)) {
+        setTableMissing(true);
+        toast({
+          title: "DB 테이블 없음",
+          description: "Supabase에 notification_preferences 테이블을 생성해야 합니다.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "설정 저장 실패", variant: "destructive" });
+      }
       setPrefs((prev) => ({ ...prev, [key]: !value }));
     }
   };
@@ -92,6 +118,27 @@ const NotificationSettingsPage = () => {
             <div className="flex justify-center py-16">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
+          ) : tableMissing ? (
+            <Alert variant="destructive" className="rounded-xl">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>알림 설정 DB가 아직 없습니다</AlertTitle>
+              <AlertDescription className="text-sm mt-2 space-y-2">
+                <p>
+                  Supabase REST가 <code className="text-xs bg-muted px-1 rounded">notification_preferences</code> 테이블을
+                  찾지 못해 404가 납니다. 아래 중 하나로 해결할 수 있습니다.
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                  <li>
+                    Supabase 대시보드 → <strong>SQL Editor</strong>에서 저장소의{" "}
+                    <code className="text-xs">supabase/snippets/ensure_notification_preferences.sql</code> 내용을 붙여
+                    넣고 실행
+                  </li>
+                  <li>
+                    또는 로컬에서 <code className="text-xs">supabase db push</code>로 전체 마이그레이션 적용
+                  </li>
+                </ul>
+              </AlertDescription>
+            </Alert>
           ) : (
             <div className="space-y-3">
               {notifItems.map((item) => (
