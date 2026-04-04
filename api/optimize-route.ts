@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createServiceClient, requireUser, HttpError } from "./lib/auth";
+import { createServiceClient, requireUser, HttpError } from "./lib/auth.js";
+import { resolveCorsOrigin, applyCorsHeaders, securityHeaders } from "./lib/cors.js";
+import { checkAiRateLimit } from "./lib/rateLimit.js";
+import { parsePlacesBody } from "./lib/validate.js";
+import { chatCompletion } from "./lib/aiProvider.js";
 
 export const config = { maxDuration: 60 };
-import { resolveCorsOrigin, applyCorsHeaders, securityHeaders } from "./lib/cors";
-import { checkAiRateLimit } from "./lib/rateLimit";
-import { parsePlacesBody } from "./lib/validate";
-import { chatCompletion } from "./lib/aiProvider";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const corsOrigin = resolveCorsOrigin(req);

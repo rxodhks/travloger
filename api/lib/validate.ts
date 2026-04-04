@@ -1,4 +1,4 @@
-import { HttpError } from "./auth";
+import { HttpError } from "./auth.js";
 
 const MAX_PLACES = 30;
 const MIN_PLACES = 2;
