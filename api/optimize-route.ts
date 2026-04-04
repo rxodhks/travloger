@@ -5,7 +5,7 @@ export const config = { maxDuration: 60 };
 import { resolveCorsOrigin, applyCorsHeaders, securityHeaders } from "./lib/cors";
 import { checkAiRateLimit } from "./lib/rateLimit";
 import { parsePlacesBody } from "./lib/validate";
-import { lovableChatCompletion } from "./lib/aiLovable";
+import { chatCompletion } from "./lib/aiProvider";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const corsOrigin = resolveCorsOrigin(req);
@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 - 영업시간이 제한적인 장소(예: 시장, 박물관)를 우선 배치
 - JSON만 출력, 다른 텍스트 없이`;
 
-    const content = await lovableChatCompletion(prompt, { temperature: 0.3 });
+    const content = await chatCompletion(prompt, { temperature: 0.3 });
 
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {

@@ -4,7 +4,7 @@ import { createServiceClient, requireUser, HttpError } from "./lib/auth";
 export const config = { maxDuration: 60 };
 import { resolveCorsOrigin, applyCorsHeaders, securityHeaders } from "./lib/cors";
 import { checkAiRateLimit } from "./lib/rateLimit";
-import { lovableChatCompletion } from "./lib/aiLovable";
+import { chatCompletion } from "./lib/aiProvider";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const corsOrigin = resolveCorsOrigin(req);
@@ -71,7 +71,7 @@ Respond ONLY in Korean. Return a JSON array of exactly 5 recommendations with th
 
 Return ONLY the JSON array, nothing else.`;
 
-    const content = await lovableChatCompletion(prompt, { temperature: 0.8 });
+    const content = await chatCompletion(prompt, { temperature: 0.8 });
 
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     let recommendations: unknown[] = [];
