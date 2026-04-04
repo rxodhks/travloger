@@ -24,4 +24,8 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // 지도·차트 등으로 메인 청크가 500kB를 넘음; Vercel 로그 경고만 완화 (필요 시 추후 lazy load로 분리)
+    chunkSizeWarningLimit: 1000,
+  },
 }));
