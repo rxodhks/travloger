@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSchemaHealth } from "@/contexts/SchemaHealthContext";
 
 // Simple in-memory cache to avoid repeated edge function calls
 let cachedResult: { isPremium: boolean; plan: string | null; subscriptionEnd: string | null; timestamp: number } | null = null;
@@ -8,6 +9,7 @@ const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
 
 export const usePremiumStatus = () => {
   const { user } = useAuth();
+  const { status: schemaStatus } = useSchemaHealth();
   const [isPremium, setIsPremium] = useState(cachedResult?.isPremium ?? false);
   const [plan, setPlan] = useState<string | null>(cachedResult?.plan ?? null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(cachedResult?.subscriptionEnd ?? null);
@@ -38,21 +40,25 @@ export const usePremiumStatus = () => {
       return;
     }
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
-        "check-subscription",
-        {
-          headers: session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}` }
-            : {},
-        }
-      );
+    const skipEdgeFn = schemaStatus === "missing";
 
-      if (!stripeError && stripeData?.subscribed) {
-        applyResult(true, stripeData.plan || "premium", stripeData.subscription_end || null);
-        setLoading(false);
-        return;
+    try {
+      if (!skipEdgeFn) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
+          "check-subscription",
+          {
+            headers: session?.access_token
+              ? { Authorization: `Bearer ${session.access_token}` }
+              : {},
+          }
+        );
+
+        if (!stripeError && stripeData?.subscribed) {
+          applyResult(true, stripeData.plan || "premium", stripeData.subscription_end || null);
+          setLoading(false);
+          return;
+        }
       }
 
       // Fallback: check local subscriptions table (for Toss payments)
@@ -88,14 +94,21 @@ export const usePremiumStatus = () => {
     }
 
     setLoading(false);
-  }, [user, applyResult]);
+  }, [user, applyResult, schemaStatus]);
 
   useEffect(() => {
+    if (!user) {
+      checkedRef.current = false;
+      return;
+    }
+    if (schemaStatus === "checking" || schemaStatus === "idle") {
+      return;
+    }
     if (!checkedRef.current) {
       checkedRef.current = true;
       checkStatus();
     }
-  }, [checkStatus]);
+  }, [user, schemaStatus, checkStatus]);
 
   const limits = {
     maxGroupMembers: isPremium ? 50 : 5,

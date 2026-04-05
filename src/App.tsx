@@ -5,6 +5,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { SchemaHealthProvider } from "@/contexts/SchemaHealthContext";
+import SchemaSetupBanner from "@/components/SchemaSetupBanner";
 import BottomNav from "@/components/BottomNav";
 
 // Lazy-loaded pages
@@ -60,7 +62,8 @@ const AppLayout = () => {
   const showNav = !publicPaths.includes(location.pathname);
 
   return (
-    <>
+    <div className="min-h-dvh">
+      <SchemaSetupBanner />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -89,7 +92,7 @@ const AppLayout = () => {
         </Routes>
       </Suspense>
       {showNav && <BottomNav />}
-    </>
+    </div>
   );
 };
 
@@ -100,7 +103,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppLayout />
+          <SchemaHealthProvider>
+            <AppLayout />
+          </SchemaHealthProvider>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
