@@ -21,8 +21,12 @@ export async function invokeEdgeFunction<T = unknown>(
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
+  /** 게이트웨이는 만료 access_token 이면 401 → refresh 응답의 토큰을 우선 사용 */
   const refreshToken = async (): Promise<string | null> => {
-    await supabase.auth.refreshSession().catch(() => undefined);
+    const { data: refreshed, error } = await supabase.auth.refreshSession();
+    if (!error && refreshed.session?.access_token) {
+      return refreshed.session.access_token;
+    }
     const {
       data: { session },
     } = await supabase.auth.getSession();

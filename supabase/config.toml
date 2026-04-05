@@ -1,1 +1,19 @@
-project_id = "vtyeqrdarerbejhoooih"
+# `supabase link` 로 연결한 프로젝트와 맞추세요. 배포: npx supabase functions deploy <이름>
+project_id = "scispybsdlybsfgkmgfx"
+
+# 게이트웨이 JWT 검증을 끄고, 각 함수에서 Authorization + auth.getUser 로 검증합니다.
+# (URL·anon 키·세션 불일치로 게이트에서만 401 이 나는 경우를 줄입니다.)
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.create-toss-payment]
+verify_jwt = false
+
+[functions.confirm-toss-payment]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
