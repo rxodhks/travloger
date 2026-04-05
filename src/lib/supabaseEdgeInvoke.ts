@@ -3,9 +3,40 @@ import { supabase } from "@/integrations/supabase/client";
 function functionsHttpStatus(error: unknown): number | undefined {
   if (error && typeof error === "object") {
     const e = error as { context?: { status?: number }; status?: number };
+    if (e.context && typeof (e.context as Response).status === "number") {
+      return (e.context as Response).status;
+    }
     return e.context?.status ?? e.status;
   }
   return undefined;
+}
+
+/** Edge Function 이 JSON `{ error: "..." }` 를 주면 토스트에 그대로 노출 */
+async function messageFromFunctionsError(error: unknown): Promise<string> {
+  const ctx =
+    error && typeof error === "object" && error !== null && "context" in error
+      ? (error as { context: unknown }).context
+      : null;
+  if (ctx instanceof Response) {
+    try {
+      const json: unknown = await ctx.clone().json();
+      if (json && typeof json === "object" && json !== null && "error" in json) {
+        const e = (json as { error: unknown }).error;
+        if (e != null && String(e).trim()) return String(e).trim();
+      }
+    } catch {
+      try {
+        const text = (await ctx.clone().text()).trim();
+        if (text) return text.slice(0, 400);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  if (error && typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message: string }).message);
+  }
+  return "요청에 실패했습니다.";
 }
 
 /**
@@ -47,10 +78,7 @@ export async function invokeEdgeFunction<T = unknown>(
   }
 
   if (error) {
-    const msg =
-      typeof error === "object" && error !== null && "message" in error
-        ? String((error as { message: string }).message)
-        : "요청에 실패했습니다.";
+    const msg = await messageFromFunctionsError(error);
     return { data: data as T | null, error: new Error(msg) };
   }
 

@@ -9,6 +9,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function resolveAppOrigin(req: Request): string {
+  const origin = req.headers.get("origin")?.trim();
+  if (origin?.startsWith("http")) return origin;
+  const referer = req.headers.get("referer");
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+  const fromEnv = Deno.env.get("SITE_URL")?.trim() ?? Deno.env.get("PUBLIC_APP_URL")?.trim();
+  if (fromEnv?.startsWith("http")) return fromEnv;
+  return "http://localhost:8080";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -45,11 +61,11 @@ serve(async (req) => {
     } else {
       customerId = customers.data[0].id;
     }
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const appOrigin = resolveAppOrigin(req);
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/premium`,
+      return_url: `${appOrigin}/premium`,
     });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {
