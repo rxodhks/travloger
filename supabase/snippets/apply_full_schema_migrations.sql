@@ -1,5 +1,7 @@
 /*
- * Travloger — 전체 DB 스키마 한 번에 적용
+ * Travloger — 전체 DB 스키마 한 번에 적용 (자동 생성: node scripts/merge-supabase-migrations.mjs)
+ *
+ * 인코딩: UTF-8(무 BOM). 이 스크립트로 재생성하면 한글·이모지가 보존됩니다.
  *
  * 사용: Supabase Dashboard → SQL Editor → New query → 이 파일 전체 붙여넣기 → Run
  *
@@ -16,6 +18,7 @@
  *
  * 각 함수에 필요한 Secrets 는 Supabase Dashboard → Edge Functions → Secrets 에 설정하세요.
  */
+
 
 
 -- ========== 20260324012615_ceb7fbe1-6a7f-40a1-abb2-63af2073539b.sql ==========
@@ -72,7 +75,7 @@ CREATE TABLE public.profiles (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   display_name TEXT NOT NULL DEFAULT '',
-  avatar_emoji TEXT NOT NULL DEFAULT '?삃',
+  avatar_emoji TEXT NOT NULL DEFAULT '😊',
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
@@ -211,7 +214,7 @@ CREATE TABLE public.checkins (
   user_id uuid NOT NULL,
   name text NOT NULL DEFAULT '',
   location text NOT NULL DEFAULT '',
-  emoji text NOT NULL DEFAULT '?뱧',
+  emoji text NOT NULL DEFAULT '📍',
   lat double precision DEFAULT 0,
   lng double precision DEFAULT 0,
   couple_id uuid REFERENCES public.couples(id) ON DELETE SET NULL,
@@ -323,7 +326,7 @@ CREATE TABLE public.trip_plans (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid NOT NULL,
   title text NOT NULL DEFAULT '',
-  status text NOT NULL DEFAULT '怨꾪쉷以?,
+  status text NOT NULL DEFAULT '계획중',
   start_date date,
   end_date date,
   places text[] NOT NULL DEFAULT '{}',
@@ -459,30 +462,30 @@ BEGIN
   -- Get actor display name
   SELECT display_name INTO actor_name FROM public.profiles WHERE user_id = NEW.user_id LIMIT 1;
   IF actor_name IS NULL OR actor_name = '' THEN
-    actor_name := '硫ㅻ쾭';
+    actor_name := '멤버';
   END IF;
 
   -- Determine notification type based on table
   IF TG_TABLE_NAME = 'checkins' THEN
     notif_type := 'checkin';
-    notif_title := '?덈줈??泥댄겕??;
-    notif_message := actor_name || '?섏씠 ' || COALESCE(NEW.location, '?대뵖媛') || '?먯꽌 泥댄겕?명뻽?듬땲??;
+    notif_title := '새로운 체크인';
+    notif_message := actor_name || '님이 ' || COALESCE(NEW.location, '어딘가') || '에서 체크인했습니다';
     pref_column := 'checkin_notify';
   ELSIF TG_TABLE_NAME = 'memories' THEN
     notif_type := 'memory';
-    notif_title := '?덈줈??異붿뼲';
-    notif_message := actor_name || '?섏씠 ?덈줈??異붿뼲??湲곕줉?덉뒿?덈떎';
+    notif_title := '새로운 추억';
+    notif_message := actor_name || '님이 새로운 추억을 기록했습니다';
     pref_column := 'memory_notify';
   ELSIF TG_TABLE_NAME = 'trip_plans' THEN
     notif_type := 'trip_plan';
-    notif_title := '?덈줈???ы뻾 怨꾪쉷';
-    notif_message := actor_name || '?섏씠 "' || COALESCE(NEW.title, '?ы뻾') || '" 怨꾪쉷??留뚮뱾?덉뒿?덈떎';
+    notif_title := '새로운 여행 계획';
+    notif_message := actor_name || '님이 "' || COALESCE(NEW.title, '여행') || '" 계획을 만들었습니다';
     pref_column := 'trip_plan_notify';
   ELSIF TG_TABLE_NAME = 'group_members' THEN
     notif_type := 'member_join';
     SELECT name INTO grp_name FROM public.groups WHERE id = NEW.group_id LIMIT 1;
-    notif_title := '??硫ㅻ쾭 李멸?';
-    notif_message := actor_name || '?섏씠 "' || COALESCE(grp_name, '洹몃９') || '"??李멸??덉뒿?덈떎';
+    notif_title := '새 멤버 참가';
+    notif_message := actor_name || '님이 "' || COALESCE(grp_name, '그룹') || '"에 참가했습니다';
     pref_column := 'member_join_notify';
   END IF;
 
@@ -614,7 +617,7 @@ CREATE TABLE public.trip_history (
   start_date date,
   end_date date,
   places text[] NOT NULL DEFAULT '{}'::text[],
-  status text NOT NULL DEFAULT '?꾨즺',
+  status text NOT NULL DEFAULT '완료',
   original_trip_id uuid,
   archived_at timestamp with time zone NOT NULL DEFAULT now(),
   created_at timestamp with time zone NOT NULL DEFAULT now()
@@ -716,7 +719,7 @@ CREATE TABLE public.group_expenses (
   amount numeric NOT NULL,
   currency text NOT NULL DEFAULT 'KRW',
   description text NOT NULL DEFAULT '',
-  category text NOT NULL DEFAULT '湲고?',
+  category text NOT NULL DEFAULT '기타',
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -737,4 +740,3 @@ CREATE POLICY "Users can update own expenses"
 CREATE POLICY "Users can delete own expenses"
   ON public.group_expenses FOR DELETE TO authenticated
   USING (auth.uid() = user_id);
-
