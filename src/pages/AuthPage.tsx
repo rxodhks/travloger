@@ -20,17 +20,21 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true);
 
+    const emailTrimmed = email.trim();
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: emailTrimmed,
+          password,
+        });
         if (error) throw error;
         toast({ title: "로그인 성공! ✨" });
         navigate("/home");
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: emailTrimmed,
           password,
-          options: { data: { display_name: displayName } },
+          options: { data: { display_name: displayName.trim() } },
         });
         if (error) throw error;
         toast({ title: "가입 완료! 🎉", description: "이메일 인증이 자동으로 완료되었습니다." });
