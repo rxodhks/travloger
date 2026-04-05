@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/supabaseEdgeInvoke";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchemaHealth } from "@/contexts/SchemaHealthContext";
 
@@ -44,15 +45,11 @@ export const usePremiumStatus = () => {
 
     try {
       if (!skipEdgeFn) {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
-          "check-subscription",
-          {
-            headers: session?.access_token
-              ? { Authorization: `Bearer ${session.access_token}` }
-              : {},
-          }
-        );
+        const { data: stripeData, error: stripeError } = await invokeEdgeFunction<{
+          subscribed?: boolean;
+          plan?: string;
+          subscription_end?: string | null;
+        }>("check-subscription");
 
         if (!stripeError && stripeData?.subscribed) {
           applyResult(true, stripeData.plan || "premium", stripeData.subscription_end || null);

@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePremiumStatus } from "@/hooks/usePremiumStatus";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/supabaseEdgeInvoke";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,7 +55,7 @@ const PremiumPage = () => {
     if (!user) return;
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await invokeEdgeFunction<{ url?: string }>("create-checkout", {
         body: { plan: selectedPlan },
       });
       if (error) throw error;
@@ -73,9 +73,13 @@ const PremiumPage = () => {
     if (!user) return;
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-toss-payment", {
-        body: { plan: selectedPlan },
-      });
+      const { data, error } = await invokeEdgeFunction<{
+        amount?: number;
+        orderId?: string;
+        orderName?: string;
+        customerEmail?: string;
+        customerName?: string;
+      }>("create-toss-payment", { body: { plan: selectedPlan } });
       if (error) throw error;
 
       // Load Toss Payments SDK via script tag
@@ -128,7 +132,7 @@ const PremiumPage = () => {
       if (!paymentKey || !orderId || !amount) return;
 
       try {
-        const { data, error } = await supabase.functions.invoke("confirm-toss-payment", {
+        const { data, error } = await invokeEdgeFunction("confirm-toss-payment", {
           body: { paymentKey, orderId, amount: Number(amount), plan },
         });
         if (error) throw error;
@@ -149,7 +153,7 @@ const PremiumPage = () => {
   const handleManageSubscription = async () => {
     setManagingPortal(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await invokeEdgeFunction<{ url?: string }>("customer-portal");
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
