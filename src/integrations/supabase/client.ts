@@ -11,11 +11,10 @@ if (!SUPABASE_URL?.trim() || !SUPABASE_PUBLISHABLE_KEY?.trim()) {
   throw new Error(
     [
       "Supabase 클라이언트 설정이 없습니다.",
-      "Vite는 빌드 시점에만 VITE_* 변수를 넣습니다.",
-      "Vercel → Project → Settings → Environment Variables 에 다음을 추가하고 재배포하세요:",
-      "  VITE_SUPABASE_URL",
-      "  VITE_SUPABASE_PUBLISHABLE_KEY (anon / publishable 키)",
-      "서버 API용 SUPABASE_URL 과 이름이 다릅니다. 반드시 VITE_ 접두사가 있어야 합니다.",
+      "Vercel → Settings → Environment Variables 에 URL·anon 키를 넣고 재배포하세요.",
+      "가능한 이름: VITE_SUPABASE_URL 또는 SUPABASE_URL,",
+      "VITE_SUPABASE_PUBLISHABLE_KEY 또는 SUPABASE_PUBLISHABLE_KEY 또는 SUPABASE_ANON_KEY.",
+      "service_role 키는 클라이언트에 넣지 마세요.",
     ].join(" ")
   );
 }
@@ -30,13 +29,13 @@ try {
   supabaseHost = u.hostname.toLowerCase();
 } catch {
   throw new Error(
-    "VITE_SUPABASE_URL 형식이 잘못되었습니다. Supabase 대시보드 → Settings → API 의 Project URL 전체를 복사하세요. (예: https://abcdefghijklmnop.supabase.co)"
+    "Supabase URL 형식이 잘못되었습니다. 대시보드 → Settings → API 의 Project URL 전체를 복사하세요. (예: https://abcdefghijklmnop.supabase.co)"
   );
 }
 
 if (!supabaseHost.endsWith(".supabase.co")) {
   throw new Error(
-    `VITE_SUPABASE_URL 호스트가 supabase.co 가 아닙니다: ${supabaseHost}. 대시보드에 표시된 URL을 그대로 쓰세요.`
+    `Supabase URL 호스트가 supabase.co 가 아닙니다: ${supabaseHost}. 대시보드에 표시된 URL을 그대로 쓰세요.`
   );
 }
 
@@ -44,7 +43,7 @@ const projectRef = supabaseHost.replace(/\.supabase\.co$/, "");
 const placeholderRefs = /^(xxxx|xxx|example|placeholder|your-project|my-project|project-ref)$/i;
 if (!projectRef || placeholderRefs.test(projectRef)) {
   throw new Error(
-    "VITE_SUPABASE_URL 에 실제 프로젝트 주소가 아니라 예시(xxxx 등)가 들어간 것 같습니다. Supabase → Settings → API 의 Project URL 을 다시 붙여 넣고 Vercel 환경 변수를 수정한 뒤 재배포하세요."
+    "Supabase URL 에 실제 프로젝트 주소가 아니라 예시(xxxx 등)가 들어간 것 같습니다. Settings → API 의 Project URL 을 다시 넣고 재배포하세요."
   );
 }
 
